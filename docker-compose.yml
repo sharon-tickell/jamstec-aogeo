@@ -18,6 +18,11 @@ services:
     volumes:
       - 'aogeo-pgdata:/var/lib/postgresql/data/'
 
+  geonetwork-postgres:
+    image: aogeo/geonetwork-postgres
+    build:
+      context: ./geonetwork
+
   aogeo-geonetwork:
     container_name: aogeo-geonetwork
     image: geonetwork:postgres
