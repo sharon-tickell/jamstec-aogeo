@@ -1,6 +1,7 @@
 
 # ALlow the base-image to be selected at build time.
-ARG BASE_IMAGE="tomcat:8.5-jdk8"
+# The default is a security-hardened version of the official tomcat image.
+ARG BASE_IMAGE="unidata/tomcat-docker:8.5-jre8"
 FROM $BASE_IMAGE
 
 # Record the actual base image used from the FROM command in the build output.
