@@ -23,23 +23,31 @@ services:
     build:
       context: ./geonetwork
 
+  aogeo-tomcat:
+    container_name: aogeo_tomcat
+    image: unidata/tomcat-docker:8.5
+    ports:
+      - 8080:8081
+
   aogeo-geonetwork:
     container_name: aogeo-geonetwork
-    image: geonetwork:postgres
-    depends_on:
-      - postgis
-    restart: on-failure
+    image: aogeo/geonetwork-postgres:latest
+#    depends_on:
+#      - postgis
+#    restart: on-failure
     ports:
       - 8080:8080
     environment:
-      DATA_DIR: /var/lib/geonetwork
-      POSTGRES_DB_HOST: postgis
-      POSTGRES_DB_USERNAME: postgres
-      POSTGRES_DB_PASSWORD: changeme123
-    volumes:
-      - type: bind
-        source: './volumes/aogeo-geonetwork'
-        target: '/var/lib/geonetwork'
+      TOMCAT_USER_ID: 0    # Run as root on windows or mac.  Real UID is ok on linux
+      TOMCAT_GROUP_ID: 50  # Run as root on windows or mac.  Real GID is ok on linux
+#      DATA_DIR: /var/lib/geonetwork
+#      POSTGRES_DB_HOST: postgis
+#      POSTGRES_DB_USERNAME: postgres
+#      POSTGRES_DB_PASSWORD: changeme123
+#    volumes:
+#      - type: bind
+#        source: './volumes/aogeo-geonetwork'
+#        target: '/var/lib/geonetwork'
 
 volumes:
   aogeo-pgdata:
