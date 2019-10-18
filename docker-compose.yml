@@ -19,6 +19,10 @@ services:
       - 'aogeo-pgdata:/var/lib/postgresql/data/'
       - './secrets/pg_password.txt:/run/secrets/pg_password.txt'
 
+  geonetwork-postgres:
+    image: aogeo/geonetwork-postgres:latest
+    build: ./geonetwork
+
   aogeo-geonetwork:
     container_name: aogeo-geonetwork
     image: aogeo/geonetwork-postgres:latest
