@@ -15,9 +15,37 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD_FILE: /run/secrets/pg_password.txt
+      GEONETWORK_DATABASE: geonetwork
+      GEONETWORK_USERNAME: geonetwork
+      GEONETWORK_PASSWORD_FILE: /run/secrets/gn_password.txt
+      KEYCLOAK_DATABASE: keycloak
+      KEYCLOAK_USERNAME: keycloak
+      KEYCLOAK_PASSWORD_FILE: /run/secrets/kc_password.txt
     volumes:
       - 'aogeo-pgdata:/var/lib/postgresql/data/'
-      - './secrets/pg_password.txt:/run/secrets/pg_password.txt'
+      - './secrets/:/run/secrets/'
+      - './initdb.d/:/initdb.d/'
+
+  keycloak:
+    container_name: aogeo-keycloak
+    image: jboss/keycloak:7.0.0
+    depends_on:
+      - postgis
+    ports:
+      - 8080:8080
+      - 9990:9990
+    environment:
+      KEYCLOAK_USER: keycloak
+      KEYCLOAK_PASSWORD_FILE: /run/secrets/kc_password.txt
+      DB_VENDOR: postgres
+      DB_ADDR: postgis
+      DB_DATABASE: keycloak
+      DB_USER: keycloak
+      DB_PASSWORD_FILE: /run/secrets/kc_password.txt
+    volumes:
+      - './secrets/:/run/secrets/'
+      - './volumes/keycloak/:/tmp/realms/'
+
 
   geonetwork-postgres:
     image: aogeo/geonetwork-postgres:latest
@@ -30,10 +58,10 @@ services:
       - postgis
 #    restart: on-failure
     ports:
-      - 8080:8080
+      - 9090:8080
     environment:
       CONNECTOR_PROXYNAME: 'localhost'
-      CONNECTOR_PROXYPORT: '8080'
+      CONNECTOR_PROXYPORT: '9090'
       CONNECTOR_PROXYSCHEME: 'http'
       CONNECTOR_PROXYSECURE: 'true'
       CONNECTOR_TRUSTED_PROXIES: '172\.31\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|127.0.0.1'
@@ -43,15 +71,15 @@ services:
       CORS_SUPPORT_CREDENTIALS: 'false'
       DATA_DIR: /var/lib/geonetwork
       POSTGRES_DB_HOST: postgis
-      POSTGRES_DB_USERNAME: postgres
-      POSTGRES_DB_PASSWORD_FILE: /run/secrets/pg_password.txt
+      POSTGRES_DB_USERNAME: geonetwork
+      POSTGRES_DB_PASSWORD_FILE: /run/secrets/gn_password.txt
       TOMCAT_USER_ID: 0    # Run as root on windows or mac.  Real UID is ok on linux
       TOMCAT_GROUP_ID: 50  # Group as staff on windows or mac.  Real GID is ok on linux
     volumes:
       - type: bind
         source: './volumes/aogeo-geonetwork'
         target: '/var/lib/geonetwork'
-      - './secrets/pg_password.txt:/run/secrets/pg_password.txt'
+      - './secrets/gn_password.txt:/run/secrets/gn_password.txt'
 
 volumes:
   aogeo-pgdata:

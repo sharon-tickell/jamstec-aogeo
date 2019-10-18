@@ -61,6 +61,26 @@ RUN tar -xzf /tmp/apache-log4j-${LOG4J_VERSION}-bin.tar.gz -C /tmp/; \
 # (The setenv.sh file tells Tomcat where this is)
 COPY ./log4j2.xml ${CATALINA_HOME}/conf/
 
+# Download and install the Shibboleth Identity Provider Application.
+# TODO: See https://github.com/clarin-eric/docker-shibboleth-demo/blob/master/shibboleth-idp/Dockerfile#L16
+ARG IDP_VERSION
+ENV IDP_VERSION=${IDP_VERSION:-3.4.6}
+ENV IDP_DOWNLOAD=shibboleth-identity-provider-${IDP_VERSION}.tar.gz
+ARG IDP_MD5
+ENV IDP_MD5=${IDP_MD5:-84097f1250040150d1ea3dd3acfc94f6}
+ENV IDP_TMP=/idp
+WORKDIR ${IDP_TMP}
+RUN curl -fSL -o $IDP_DOWNLOAD https://shibboleth.net/downloads/identity-provider/latest/${IDP_DOWNLOAD} && \
+    echo "$IDP_MD5 *$IDP_DOWNLOAD" | md5sum -c && \
+    tar -xvf ${IDP_DOWNLOAD} --strip-components=1 && \
+    rm ${IDP_DOWNLOAD} && \
+    ls -al && \
+    chmod 0755 ./bin/install.sh && \
+    ./bin/install.sh
+
+# Allow GeoNetwork to use Shibboleth.
+RUN sed -i -e 's#<!--<import resource="config-security-shibboleth.xml"/>-->#<import resource="config-security-shibboleth.xml"/>#g' ${GN_DIR}/WEB-INF/config-security/config-security.xml
+
 # Declare defaults for the JVM configuration settings.
 ENV JAVA_OPTS="-Djava.security.egd=file:/dev/./urandom -Djava.awt.headless=true -server -Xms512m -Xmx2024m -XX:NewSize=512m -XX:MaxNewSize=1024m -XX:+UseConcMarkSweepGC"
 ENV CATALINA_OPTS="-Dlog4j.configurationFile='${CATALINA_HOME}/conf/log4j2.xml' -Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager"

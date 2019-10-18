@@ -48,7 +48,7 @@ if [ "$1" = 'start-tomcat.sh' ] || [ "$1" = 'catalina.sh' ]; then
             echo >&2 "POSTGRES_DB_PASSWORD_FILE='${POSTGRES_DB_PASSWORD_FILE}' not found."
             exit 1
         else
-            POSTGRES_DB_PASSWORD=$(cat "${POSTGRES_DB_PASSWORD_FILE}")
+            POSTGRES_DB_PASSWORD=$(cat "${POSTGRES_DB_PASSWORD_FILE}" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
             if [ -z "${POSTGRES_DB_PASSWORD_FILE}" ]; then
                 echo >&2 "POSTGRES_DB_PASSWORD_FILE='${POSTGRES_DB_PASSWORD_FILE}' is empty."
                 exit 1
