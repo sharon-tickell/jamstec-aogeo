@@ -8,17 +8,34 @@
 version: '3.6'
 services:
 
+  postgis:
+    container_name: postgis
+    image: mdillon/postgis:11-alpine
+    restart: on-failure
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: changeme123
+    volumes:
+      - 'aogeo-pgdata:/var/lib/postgresql/data/'
+
   aogeo-geonetwork:
-    image: geonetwork
     container_name: aogeo-geonetwork
-    restart: always
+    image: geonetwork:postgres
+    depends_on:
+      - postgis
+    restart: on-failure
     ports:
       - 8080:8080
     environment:
-      DATA_DIR: /var/lib/jamstec-aogeo
+      DATA_DIR: /var/lib/geonetwork
+      POSTGRES_DB_HOST: postgis
+      POSTGRES_DB_USERNAME: postgres
+      POSTGRES_DB_PASSWORD: changeme123
     volumes:
-      - geonetwork:/var/lib/jamstec-aogeo
+      - type: bind
+        source: './volumes/aogeo-geonetwork'
+        target: '/var/lib/geonetwork'
 
 volumes:
-  geonetwork:
+  aogeo-pgdata:
     external: true
