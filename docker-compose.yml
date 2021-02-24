@@ -1,41 +1,45 @@
-# GeoNetwork
-#
-# Access via "http://localhost:8080/geonetwork" (or "http://$(docker-machine ip):8080/geonetwork" if using docker-machine)
-#
-# Default user: admin
-# Default password: admin
-
 version: '3.6'
 services:
 
-  postgis:
-    container_name: postgis
-    image: mdillon/postgis:11-alpine
-    restart: on-failure
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: changeme123
+  traefik:
+    image: "traefik:v2.4"
+    container_name: "traefik"
+    command:
+      - "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.myresolver.acme.httpchallenge=true"
+      - "--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+      - "--certificatesresolvers.myresolver.acme.email=aogeo@csiro-coasts.net"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "443:443"
+      - "8081:8080"
     volumes:
-      - 'aogeo-pgdata:/var/lib/postgresql/data/'
+      - "./letsencrypt:/letsencrypt"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
 
-  aogeo-geonetwork:
-    container_name: aogeo-geonetwork
-    image: geonetwork:postgres
-    depends_on:
-      - postgis
-    restart: on-failure
+
+  geonetwork:
+    container_name: geonetwork
+    image: geonetwork
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.aogeo.rule=Host(`aogeo.csiro-coasts.net`)"
+      - "traefik.http.routers.aogeo.entrypoints=websecure"
+      - "traefik.http.routers.aogeo.tls.certresolver=myresolver"
+    restart: always
     ports:
       - 8080:8080
     environment:
-      DATA_DIR: /var/lib/geonetwork
-      POSTGRES_DB_HOST: postgis
-      POSTGRES_DB_USERNAME: postgres
-      POSTGRES_DB_PASSWORD: changeme123
+      DATA_DIR: /var/lib/geonetwork/data
+      GEONETWORK_DB_NAME: /var/lib/geonetwork/db/gn
     volumes:
-      - type: bind
-        source: './volumes/aogeo-geonetwork'
-        target: '/var/lib/geonetwork'
+      - geonetwork:/var/lib/geonetwork
 
 volumes:
-  aogeo-pgdata:
-    external: true
+  geonetwork:
